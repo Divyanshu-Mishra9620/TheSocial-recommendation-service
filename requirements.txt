@@ -1,0 +1,14 @@
+# Recommendation Service dependencies.
+# Web framework, runtime, and the Redis client (used by the event-stream
+# ingestion consumer). The MongoDB client (motor) and ML libraries
+# (pandas, numpy, scikit-learn, xgboost) are introduced in later batches to
+# keep the image small and fast to build/validate.
+
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# Data clients
+redis==5.2.1
+motor==3.6.0
