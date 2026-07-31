@@ -10,4 +10,4 @@ import os
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("INTERNAL_SERVICE_TOKEN", "test-internal-token")
 os.environ.setdefault("MONGO_URI", "mongodb://localhost:27017/rec-test")
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379")
+os.environ.setdefault("REDIS_URL", "redis://red-d7v2vglb910c73akocvg:6379")

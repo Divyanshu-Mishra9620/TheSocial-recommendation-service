@@ -73,18 +73,25 @@ async def generate_candidates(
     reels = get_collection(settings.reels_collection)
     prefs_col = get_collection(settings.user_preferences_collection)
     interactions_col = get_collection(settings.user_interactions_collection)
+    follows_col = get_collection(settings.follows_collection)
 
     # Affinity from the feature store (compute-on-miss).
     features = await get_user_features(user_id)
     top_tags = list(features.get("tag_affinity", {}).keys())[:_TOP_TAGS]
     affinity_creators = list(features.get("creator_affinity", {}).keys())
 
-    # Preferences (audio, followed/muted creators).
+    # Preferences (audio, muted creators) + the real follow graph (Follow.ts —
+    # userreelpreferences.followed_creators was a dead field with no writer).
     prefs = await prefs_col.find_one({"user_id": _to_object_id(user_id)}) or {}
     audio_ids = prefs.get("preferred_audio_ids") or []
-    followed = prefs.get("followed_creators") or []
     muted_oids = _to_object_ids(prefs.get("muted_creators") or [])
     muted_str = {str(m) for m in muted_oids}
+
+    follow_docs = await follows_col.find(
+        {"follower": _to_object_id(user_id), "status": "accepted"},
+        {"followee": 1},
+    ).to_list(length=None)
+    followed = [d["followee"] for d in follow_docs if d.get("followee") is not None]
 
     # Creator candidates = affinity ∪ followed, minus muted.
     creator_oids = _unique_object_ids(

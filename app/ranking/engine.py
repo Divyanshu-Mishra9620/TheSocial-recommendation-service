@@ -32,8 +32,13 @@ async def rank_candidates(
     """
     candidates = await generate_candidates(user_id, limit=limit, seen=seen)
     reel_ids: list[str] = candidates.get("reel_ids", [])
+    # Per-source recall counts (tag/creator/audio/trending/collab-filter) —
+    # computed by generate_candidates() but previously dropped here, leaving
+    # no way to see *why* a given user got a thin/generic feed once this
+    # reaches the internal /feed response.
+    source_breakdown: dict[str, Any] = candidates.get("source_breakdown", {})
     if not reel_ids:
-        return {"ranked_reel_ids": [], "scores": {}}
+        return {"ranked_reel_ids": [], "scores": {}, "source_breakdown": source_breakdown}
 
     user_features = await get_user_features(user_id)
 
@@ -49,4 +54,8 @@ async def rank_candidates(
 
     ranked_reel_ids = sorted(reel_ids, key=lambda rid: scores[rid], reverse=True)
 
-    return {"ranked_reel_ids": ranked_reel_ids, "scores": scores}
+    return {
+        "ranked_reel_ids": ranked_reel_ids,
+        "scores": scores,
+        "source_breakdown": source_breakdown,
+    }

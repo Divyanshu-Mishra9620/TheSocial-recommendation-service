@@ -158,11 +158,17 @@ async def rerank_feed(
     ranked = await rank_candidates(user_id, limit=_CANDIDATE_POOL, seen=seen)
     reel_ids: list[str] = ranked.get("ranked_reel_ids", [])
     scores: dict[str, float] = ranked.get("scores", {})
+    source_breakdown: dict[str, Any] = ranked.get("source_breakdown", {})
 
     if not reel_ids:
         return {
             "final_reel_ids": [],
-            "metadata": {"candidates_in": 0, "reranked_out": 0, "deterministic": True},
+            "metadata": {
+                "candidates_in": 0,
+                "reranked_out": 0,
+                "deterministic": True,
+                "source_breakdown": source_breakdown,
+            },
         }
 
     meta = await _fetch_metadata(reel_ids)
@@ -224,5 +230,6 @@ async def rerank_feed(
         "freshness_weight": _FRESHNESS_WEIGHT,
         "exploration_epsilon": _EXPLORATION_EPSILON,
         "deterministic": True,
+        "source_breakdown": source_breakdown,
     }
     return {"final_reel_ids": selected, "metadata": metadata}

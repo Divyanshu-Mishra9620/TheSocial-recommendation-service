@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     user_interactions_collection: str = "userreelinteractions"
     reels_collection: str = "reels"
     user_preferences_collection: str = "userreelpreferences"
+    follows_collection: str = "follows"
 
     # Model registry + artifacts (offline training only; not used at serving yet).
     model_versions_collection: str = "rec_model_versions"

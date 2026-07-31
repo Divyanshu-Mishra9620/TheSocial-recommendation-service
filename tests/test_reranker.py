@@ -86,3 +86,36 @@ async def test_rerank_empty_input(monkeypatch):
     monkeypatch.setattr(reranker, "rank_candidates", fake_rank)
     result = await reranker.rerank_feed("u", limit=10)
     assert result["final_reel_ids"] == []
+
+
+async def test_rerank_propagates_source_breakdown_into_metadata(monkeypatch):
+    """rank_candidates' per-source recall counts must reach the final
+    metadata dict — previously computed by generate_candidates() but
+    silently dropped by rank_candidates(), leaving no way to see why a given
+    user got a thin/generic feed."""
+    breakdown = {"tag_affinity": 3, "creator_affinity": 5, "trending": 2}
+
+    async def fake_rank(user_id, limit=500, seen=None):
+        return {
+            "ranked_reel_ids": ["r1"],
+            "scores": {"r1": 1.0},
+            "source_breakdown": breakdown,
+        }
+
+    async def fake_meta(reel_ids):
+        return {"r1": {"creator_id": "A", "tags": ["x"], "tag_sig": ("x",), "freshness": 0.5}}
+
+    monkeypatch.setattr(reranker, "rank_candidates", fake_rank)
+    monkeypatch.setattr(reranker, "_fetch_metadata", fake_meta)
+
+    result = await reranker.rerank_feed("u", limit=10)
+    assert result["metadata"]["source_breakdown"] == breakdown
+
+
+async def test_rerank_empty_input_still_includes_source_breakdown(monkeypatch):
+    async def fake_rank(user_id, limit=500, seen=None):
+        return {"ranked_reel_ids": [], "scores": {}, "source_breakdown": {"trending": 0}}
+
+    monkeypatch.setattr(reranker, "rank_candidates", fake_rank)
+    result = await reranker.rerank_feed("u", limit=10)
+    assert result["metadata"]["source_breakdown"] == {"trending": 0}
